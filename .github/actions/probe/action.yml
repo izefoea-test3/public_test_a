@@ -1,0 +1,24 @@
+name: "Secret Probe Local Action"
+description: "Probe whether selected secret/token variables are visible inside a local composite action."
+
+inputs:
+  demo-secret:
+    description: "A normal secret explicitly passed as an action input."
+    required: false
+    default: ""
+
+runs:
+  using: "composite"
+  steps:
+    - name: Probe inside local composite action
+      shell: bash
+      env:
+        # composite action不能直接使用secrets context。
+        # 所以如果要让它拿到普通secret，应该由caller显式通过input/env传入。
+        ACTION_SECRET_INPUT: ${{ inputs.demo-secret }}
+
+        # GITHUB_TOKEN比较特殊：action可以通过github.token context获得。
+        TOKEN_FROM_CONTEXT: ${{ github.token }}
+      run: |
+        chmod +x ./scripts/probe-secret.sh
+        ./scripts/probe-secret.sh "inside local composite action"
