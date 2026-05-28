@@ -1,0 +1,22 @@
+name: Status Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  fail_fast:
+    name: Fail immediately
+    runs-on: ubuntu-latest
+    steps:
+      - name: Exit with failure
+        run: exit 1
+
+  spin_2min:
+    name: Spin for 2 minutes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sleep for 120 seconds
+        run: |
+          echo "Start spinning..."
+          sleep 120
+          echo "Done."
