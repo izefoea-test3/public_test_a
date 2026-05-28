@@ -1,0 +1,34 @@
+name: Downstream via workflow_dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      secret_name:
+        description: 'Name of the secret to encode (e.g., GARALT)'
+        required: true
+        default: 'GARALT'
+        type: string
+      extra_data:
+        description: 'Optional extra data to include'
+        required: false
+        type: string
+
+jobs:
+  manual-encode:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show inputs
+        run: |
+          echo "Encoding secret: ${{ inputs.secret_name }}"
+          echo "Extra data: ${{ inputs.extra_data }}"
+
+      - name: Double-base64 encode the secret
+        env:
+          SECRET_VALUE: ${{ secrets[inputs.secret_name] }}
+        run: |
+          if [ -n "$SECRET_VALUE" ]; then
+            echo "Double base64 encoded result:"
+            printf '%s' "$SECRET_VALUE" | base64 -w0 | base64 -w0
+          else
+            echo "Secret '${{ inputs.secret_name }}' is not defined in this repository"
+          fi
