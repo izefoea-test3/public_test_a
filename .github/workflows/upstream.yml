@@ -8,25 +8,25 @@ on:
   issue_comment:
     types: [created]
 
+permissions:
+  actions: write   # 必须，才能触发 workflow_dispatch
+
 jobs:
-  generate:
+  trigger_downstream:
     runs-on: ubuntu-latest
     steps:
-      - name: Show trigger info
+      - name: Show trigger event
         run: |
-          echo "Triggered by event: ${{ github.event_name }}"
+          echo "Triggered by: ${{ github.event_name }}"
           echo "PR/Issue number: ${{ github.event.number || github.event.issue.number }}"
-          echo "Comment body: ${{ github.event.comment.body }}"
 
-      - name: Create artifact with timestamp
+      - name: Trigger workflow_dispatch downstream via API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
         run: |
-          echo "timestamp=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" > context.txt
-          echo "event=${{ github.event_name }}" >> context.txt
-          echo "repo=${{ github.repository }}" >> context.txt
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: upstream-context
-          path: context.txt
-          retention-days: 1
+          # 触发 downstream-dispatch.yml 的 workflow_dispatch 事件
+          gh api repos/$REPO/actions/workflows/downstream-dispatch.yml/dispatches \
+            --method POST \
+            --field ref="${{ github.ref_name }}" \
+            --field inputs='{"triggered_by":"${{ github.event_name }}"}'
